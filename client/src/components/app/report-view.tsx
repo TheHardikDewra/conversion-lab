@@ -183,7 +183,9 @@ export function ReportView({
             </>
           )}
 
-          {tab === "rewrites" && <RewritePanel rewrites={result.rewrites} />}
+          {tab === "rewrites" && (
+            <RewritePanel rewrites={result.rewrites} extracted={result.extracted} />
+          )}
           {tab === "extracted" && <ExtractedPanel audit={audit} />}
         </Sheet>
       </div>
@@ -208,16 +210,81 @@ const SLOT_LABEL: Record<Rewrite["slot"], string> = {
   proof: "Proof",
 };
 
-function RewritePanel({ rewrites }: { rewrites: Rewrite[] }) {
+/**
+ * The slots the copy layer would work on, derived from what was actually
+ * found on the page. Shown when the layer is off so the tab teaches what the
+ * feature does against real copy, rather than being an empty callout. No
+ * variant text is invented here: the placeholders are visibly empty.
+ */
+function pendingSlots(extracted: Audit["result"]["extracted"]) {
+  const subhead = extracted.headings.find((h) => h.level === 2)?.text ?? null;
+  const proof = extracted.proofSignals.find((p) => p.kind !== "guarantee")?.evidence ?? null;
+
+  return (
+    [
+      ["headline", extracted.h1[0] ?? null],
+      ["subhead", subhead],
+      ["cta", extracted.ctas[0]?.text ?? null],
+      ["proof", proof],
+    ] as const
+  ).filter((entry): entry is readonly [Rewrite["slot"], string] => !!entry[1]);
+}
+
+function RewritePanel({
+  rewrites,
+  extracted,
+}: {
+  rewrites: Rewrite[];
+  extracted: Audit["result"]["extracted"];
+}) {
   if (!rewrites.length) {
+    const slots = pendingSlots(extracted);
     return (
-      <div className="p-5">
-        <Note tone="accent" title="No rewrites on this audit">
-          Rewrites come from the optional copy layer. Add an Anthropic API key to
-          the environment and re-run the audit to get three variants for each
-          headline, subhead and call to action, each with the angle it takes and
-          why it should outperform the original.
-        </Note>
+      <div>
+        <div className="p-5">
+          <Note tone="accent" title="The copy layer is off for this audit">
+            Add an <code className="font-mono text-2xs">ANTHROPIC_API_KEY</code> to
+            the environment and re-run the audit. Below is what it would rewrite on
+            this page, taken from the copy actually found there.
+          </Note>
+        </div>
+
+        <div className="divide-y divide-rule border-t border-rule">
+          {slots.map(([slot, text], i) => (
+            <div key={slot} className="px-5 py-6">
+              <div className="flex items-baseline gap-3">
+                <span className="font-mono text-2xs tnum text-ink-subtle">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <Label>{SLOT_LABEL[slot]}</Label>
+              </div>
+
+              <p className="mt-4 max-w-measure border-l-2 border-rule-strong pl-4 text-md leading-relaxed text-ink">
+                {text}
+              </p>
+
+              <div className="mt-5 divide-y divide-rule border-y border-rule">
+                {["A", "B", "C"].map((letter) => (
+                  <div key={letter} className="flex items-center gap-4 py-3.5">
+                    <span className="shrink-0 font-mono text-2xs text-ink-subtle">
+                      {letter}
+                    </span>
+                    <span className="h-px flex-1 border-b border-dashed border-rule-strong" />
+                    <span className="shrink-0 font-mono text-2xs text-ink-subtle">
+                      awaiting key
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {!slots.length && (
+          <EmptyState title="Nothing on this page to rewrite">
+            No headline, subhead, call to action or proof text was found.
+          </EmptyState>
+        )}
       </div>
     );
   }
