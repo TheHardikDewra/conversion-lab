@@ -6,6 +6,10 @@ A CRO audit tool that fetches any public landing page, reads its copy and struct
 
 Runs with **zero configuration**. No API key, no database, no signup. Clone it, `npm run dev`, and you land in a populated app.
 
+![Conversion Lab: pasting a URL, running a live audit, expanding a finding, and switching to dark mode](docs/demo.gif)
+
+*Recorded against the running app. The audit in the clip is live, not a mockup.*
+
 ---
 
 ## What is in the box
