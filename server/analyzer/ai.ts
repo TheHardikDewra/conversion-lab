@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { Issue, Rewrite } from "@shared/schema";
+import type { Issue, Rewrite } from "../../shared/schema";
 import type { ExtractOutput } from "./extract";
 
 /**

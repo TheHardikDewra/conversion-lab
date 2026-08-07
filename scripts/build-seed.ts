@@ -98,7 +98,7 @@ async function main() {
 // Scores reflect this template's own rubric and nothing else. They are not a
 // judgement of the companies involved, whose pages are public and were fetched
 // exactly as any browser would fetch them.
-import type { AuditResult } from "@shared/schema";
+import type { AuditResult } from "../shared/schema";
 
 export type SeedAudit = {
   id: string;

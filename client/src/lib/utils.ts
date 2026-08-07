@@ -1,6 +1,41 @@
 import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
 import type { Severity } from "@shared/schema";
+
+/**
+ * tailwind-merge only knows the stock scales. Our custom font sizes (d1-d6,
+ * 2xs, md) and custom colours (ink, accent, critical, warn, pass, info) both
+ * look like `text-*`, so out of the box it treats them as one conflicting
+ * group and keeps whichever came last. In practice that meant
+ * `cn("text-d6", "text-pass")` silently dropped the size and rendered every
+ * score at body-text size. Teaching it the two groups fixes it everywhere.
+ */
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      "font-size": [
+        { text: ["2xs", "xs", "sm", "base", "md", "lg", "d1", "d2", "d3", "d4", "d5", "d6"] },
+      ],
+      "text-color": [
+        {
+          text: [
+            "ink",
+            "ink-muted",
+            "ink-subtle",
+            "ink-inverse",
+            "accent",
+            "accent-hover",
+            "accent-on",
+            "critical",
+            "warn",
+            "pass",
+            "info",
+          ],
+        },
+      ],
+    },
+  },
+});
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -54,6 +89,12 @@ export const TONE_SOFT = {
   critical: "bg-critical-soft",
   warn: "bg-warn-soft",
   pass: "bg-pass-soft",
+} as const;
+
+export const TONE_BORDER = {
+  critical: "border-critical",
+  warn: "border-warn",
+  pass: "border-pass",
 } as const;
 
 export function severityTone(s: Severity): "critical" | "warn" | "pass" {

@@ -3,7 +3,7 @@ import { Link, useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Link2, Check } from "lucide-react";
 import { api } from "@/lib/api";
-import { Button, Card, EmptyState, Skeleton } from "@/components/ui";
+import { Button, EmptyState, Sheet, Skeleton } from "@/components/ui";
 import { ReportView } from "@/components/app/report-view";
 
 export default function Report() {
@@ -20,18 +20,18 @@ export default function Report() {
 
   if (isError || !audit) {
     return (
-      <Card>
+      <Sheet>
         <EmptyState
-          title="That audit does not exist"
+          title="No such report"
           action={
             <Link href="/">
-              <Button size="sm">Back to audits</Button>
+              <Button size="sm">Back to the index</Button>
             </Link>
           }
         >
           It may have been deleted, or the link may be wrong.
         </EmptyState>
-      </Card>
+      </Sheet>
     );
   }
 
@@ -39,10 +39,10 @@ export default function Report() {
     <>
       <Link
         href="/"
-        className="mb-4 inline-flex items-center gap-1.5 text-xs font-medium text-ink-subtle transition-colors duration-fast ease-ease hover:text-ink"
+        className="mb-8 inline-flex items-center gap-1.5 font-mono text-2xs uppercase tracking-[0.1em] text-ink-subtle transition-colors duration-fast ease-ease hover:text-ink"
       >
-        <ArrowLeft className="h-3.5 w-3.5" strokeWidth={2} />
-        All audits
+        <ArrowLeft className="h-3 w-3" strokeWidth={2} />
+        Index
       </Link>
       <ReportView audit={audit} actions={<ShareButton token={audit.shareToken} />} />
     </>
@@ -72,8 +72,8 @@ function ShareButton({ token }: { token: string }) {
         </>
       ) : (
         <>
-          <Link2 className="h-3 w-3" strokeWidth={2} />
-          Copy share link
+          <Link2 className="h-3 w-3" strokeWidth={1.75} />
+          Share report
         </>
       )}
     </Button>
@@ -83,11 +83,13 @@ function ShareButton({ token }: { token: string }) {
 function ReportSkeleton() {
   return (
     <>
-      <Skeleton className="mb-4 h-4 w-24" />
-      <Skeleton className="mb-6 h-52 w-full" />
-      <div className="grid gap-6 lg:grid-cols-[17rem_minmax(0,1fr)]">
-        <Skeleton className="h-72 w-full" />
-        <Skeleton className="h-96 w-full" />
+      <Skeleton className="mb-8 h-3 w-16" />
+      <Skeleton className="mb-4 h-3 w-56" />
+      <Skeleton className="mb-10 h-14 w-2/3" />
+      <Skeleton className="mb-12 h-32 w-full" />
+      <div className="grid gap-10 lg:grid-cols-[17rem_minmax(0,1fr)]">
+        <Skeleton className="h-80 w-full" />
+        <Skeleton className="h-[30rem] w-full" />
       </div>
     </>
   );

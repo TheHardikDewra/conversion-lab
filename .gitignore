@@ -8,3 +8,5 @@ dist
 .upm
 .cache
 .config
+.vercel
+api/index.js

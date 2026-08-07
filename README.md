@@ -172,3 +172,19 @@ The homepage warms the store before listening so it answers Replit's five-second
 ## Licence
 
 MIT. Take it apart.
+
+---
+
+## Deploying anywhere else
+
+The Express app lives in `server/app.ts` with no opinion about how it is
+served. `server/index.ts` wraps it in a long-lived listener for Replit and
+local development; `server/vercel-entry.ts` hands the same app to a serverless
+runtime.
+
+A Vercel deploy is already wired up (`vercel.json` + `npm run build:vercel`).
+One caveat worth knowing: on serverless, without `DATABASE_URL` every cold
+start gets a fresh in-memory store re-seeded from `server/seed.ts`. The sample
+reports are always there, but an audit you run yourself lives only as long as
+that instance. Set `DATABASE_URL` to persist. On Replit the process is
+long-lived, so this does not apply.

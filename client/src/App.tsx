@@ -2,7 +2,7 @@ import { Route, Switch } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/api";
 import { AppShell } from "@/components/app/shell";
-import { Button, Card, EmptyState } from "@/components/ui";
+import { Button, EmptyState, Sheet } from "@/components/ui";
 import Dashboard from "@/pages/dashboard";
 import Report from "@/pages/report";
 import Shared from "@/pages/shared";
@@ -34,17 +34,17 @@ export default function App() {
 
 function NotFound() {
   return (
-    <Card>
+    <Sheet>
       <EmptyState
         title="Nothing here"
         action={
           <a href="/">
-            <Button size="sm">Back to audits</Button>
+            <Button size="sm">Back to the index</Button>
           </a>
         }
       >
         That page does not exist.
       </EmptyState>
-    </Card>
+    </Sheet>
   );
 }

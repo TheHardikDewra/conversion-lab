@@ -6,7 +6,7 @@ import {
   CATEGORY_META,
   runAuditSchema,
   type Weights,
-} from "@shared/schema";
+} from "../shared/schema";
 import { getStorage } from "./storage";
 import { runAudit, rescore, FetchError, RULE_COUNT } from "./analyzer/index";
 import { aiAvailable } from "./analyzer/ai";

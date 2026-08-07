@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Copy, Check, ExternalLink, Sparkles } from "lucide-react";
+import { Copy, Check, ArrowUpRight } from "lucide-react";
 import {
   CATEGORY_META,
   type Audit,
@@ -10,15 +10,16 @@ import { bytes, cn, hostOf, relativeTime } from "@/lib/utils";
 import {
   Badge,
   Button,
-  Callout,
-  Card,
-  CardHeader,
+  DataRow,
   EmptyState,
-  Eyebrow,
+  Label,
+  Note,
+  SectionHead,
+  Sheet,
   Tabs,
 } from "@/components/ui";
-import { ScoreRing, CategoryBar } from "@/components/app/charts";
-import { IssueList, SeveritySummary } from "@/components/app/issues";
+import { ScoreGauge, CategoryBar } from "@/components/app/charts";
+import { IssueList } from "@/components/app/issues";
 
 type Tab = "findings" | "rewrites" | "extracted";
 
@@ -42,61 +43,70 @@ export function ReportView({
 
   return (
     <>
-      {/* ---- Header ------------------------------------------------------- */}
-      <Card className="mb-6 overflow-hidden">
-        <div className="flex flex-col gap-6 p-5 sm:flex-row sm:items-center">
-          <ScoreRing score={result.score} grade={result.grade} />
-
-          <div className="min-w-0 flex-1">
-            <Eyebrow>Audited {relativeTime(audit.createdAt)}</Eyebrow>
-            <h1 className="mt-1.5 truncate text-xl font-semibold tracking-tight text-ink">
-              {hostOf(audit.finalUrl)}
-            </h1>
-            {audit.pageTitle && (
-              <p className="mt-1 line-clamp-2 max-w-prose text-sm leading-relaxed text-ink-muted">
-                {audit.pageTitle}
-              </p>
-            )}
-
-            <div className="mt-3">
-              <SeveritySummary issues={result.issues} />
-            </div>
-
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <a href={audit.finalUrl} target="_blank" rel="noopener noreferrer nofollow">
-                <Button size="sm" variant="secondary">
-                  Visit page
-                  <ExternalLink className="h-3 w-3" strokeWidth={2} />
-                </Button>
-              </a>
-              {actions}
-            </div>
+      {/* ---- Masthead ----------------------------------------------------- */}
+      <header className="mb-10 animate-rise">
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+          <Label>
+            Report · {hostOf(audit.finalUrl)} · {relativeTime(audit.createdAt)}
+          </Label>
+          <div className="flex items-center gap-4">
+            <a
+              href={audit.finalUrl}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              className="inline-flex items-center gap-1 font-mono text-2xs text-ink-subtle transition-colors duration-fast ease-ease hover:text-accent"
+            >
+              Open the page
+              <ArrowUpRight className="h-3 w-3" strokeWidth={1.75} />
+            </a>
+            {actions}
           </div>
         </div>
 
-        {result.verdict && (
-          <div className="border-t border-line bg-sunken px-5 py-4">
-            <div className="flex items-center gap-1.5">
-              <Sparkles className="h-3 w-3 text-accent" strokeWidth={2} />
-              <Eyebrow>The read</Eyebrow>
-            </div>
-            <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink">
-              {result.verdict}
-            </p>
-          </div>
-        )}
-      </Card>
+        <h1 className="display mt-5 max-w-measure text-d4 text-ink">
+          {audit.pageTitle ?? hostOf(audit.finalUrl)}
+        </h1>
 
-      {/* grid-cols-[minmax(0,1fr)] on the base case is load-bearing: a grid item
-          defaults to min-width:auto, so without it the column sizes to the
-          widest evidence string and every `truncate` below stops working. */}
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start">
-        {/* ---- Category rail --------------------------------------------- */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader
-              title="Categories"
-              subtitle="Weighted contributions to the overall score"
+        <div className="mt-12 grid gap-10 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-end lg:gap-16">
+          <ScoreGauge score={result.score} grade={result.grade} />
+
+          {/* A ruled tally rather than floating chips. It gives the right-hand
+              column a reason to exist and lines its baseline up with the rail. */}
+          <dl className="divide-y divide-rule border-y border-rule">
+            {(
+              [
+                ["Critical", result.issues.filter((i) => i.severity === "critical").length, "text-critical"],
+                ["Warning", result.issues.filter((i) => i.severity === "warning").length, "text-warn"],
+                ["Passing", result.issues.filter((i) => i.severity === "pass").length, "text-pass"],
+              ] as const
+            ).map(([name, count, tone]) => (
+              <div key={name} className="flex items-baseline justify-between py-2">
+                <dt className="label">{name}</dt>
+                <dd className={cn("font-mono text-sm tnum font-medium", tone)}>
+                  {String(count).padStart(2, "0")}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </header>
+
+      {result.verdict && (
+        <div className="mb-10 grid gap-4 rule-t rule-b py-6 sm:grid-cols-[8.5rem_minmax(0,1fr)] sm:gap-8">
+          <Label>The read</Label>
+          <p className="max-w-measure text-lg leading-relaxed text-ink">
+            {result.verdict}
+          </p>
+        </div>
+      )}
+
+      <div className="grid gap-8 grid-cols-[minmax(0,1fr)] lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start lg:gap-10">
+        {/* ---- Rail -------------------------------------------------------- */}
+        <div className="space-y-6">
+          <Sheet>
+            <SectionHead
+              label="Categories"
+              note="Weighted contributions to the score"
               action={
                 filter && (
                   <Button size="sm" variant="ghost" onClick={() => setFilter(null)}>
@@ -105,10 +115,11 @@ export function ReportView({
                 )
               }
             />
-            <div className="divide-y divide-line">
-              {result.categories.map((cat) => (
+            <div className="divide-y divide-rule">
+              {result.categories.map((cat, i) => (
                 <CategoryBar
                   key={cat.key}
+                  index={i}
                   label={CATEGORY_META[cat.key].label}
                   score={cat.score}
                   weight={cat.weight}
@@ -121,48 +132,46 @@ export function ReportView({
                 />
               ))}
             </div>
-          </Card>
+          </Sheet>
 
-          <Card>
-            <CardHeader title="Page vitals" />
-            <dl className="divide-y divide-line">
-              <Vital label="Words of copy" value={result.metrics.wordCount} />
-              <Vital
+          <Sheet>
+            <SectionHead label="Page vitals" />
+            <dl className="divide-y divide-rule py-1">
+              <DataRow label="Words of copy" value={result.metrics.wordCount} />
+              <DataRow label="Sentences" value={result.metrics.proseSentences} />
+              <DataRow
                 label="Avg sentence"
-                value={result.metrics.avgSentenceWords}
-                suffix=" words"
+                value={`${result.metrics.avgSentenceWords}w`}
               />
-              <Vital label="Reading ease" value={result.metrics.readingEase} />
-              <Vital
+              <DataRow label="Reading ease" value={result.metrics.readingEase} />
+              <DataRow
                 label="Reader focus"
                 value={`${Math.round(result.metrics.youRatio * 100)}%`}
               />
-              <Vital label="HTML weight" value={bytes(result.metrics.htmlBytes)} />
-              <Vital label="Script tags" value={result.metrics.scriptCount} />
-              <Vital label="Fetch time" value={`${result.metrics.fetchMs}ms`} />
+              <DataRow label="HTML weight" value={bytes(result.metrics.htmlBytes)} />
+              <DataRow label="Script tags" value={result.metrics.scriptCount} />
+              <DataRow label="Fetch" value={`${result.metrics.fetchMs}ms`} />
             </dl>
-          </Card>
+          </Sheet>
         </div>
 
-        {/* ---- Main panel ------------------------------------------------- */}
-        <Card>
-          <div className="px-2">
-            <Tabs<Tab>
-              value={tab}
-              onChange={(v) => setTab(v)}
-              tabs={[
-                { value: "findings", label: "Findings", count: open.length },
-                { value: "rewrites", label: "Rewrites", count: result.rewrites.length },
-                { value: "extracted", label: "What we read" },
-              ]}
-            />
-          </div>
+        {/* ---- Main -------------------------------------------------------- */}
+        <Sheet>
+          <Tabs<Tab>
+            value={tab}
+            onChange={(v) => setTab(v)}
+            tabs={[
+              { value: "findings", label: "Findings", count: open.length },
+              { value: "rewrites", label: "Rewrites", count: result.rewrites.length },
+              { value: "extracted", label: "What we read" },
+            ]}
+          />
 
           {tab === "findings" && (
             <>
               {filter && (
-                <div className="border-b border-line bg-sunken px-4 py-2.5">
-                  <p className="text-xs text-ink-muted">
+                <div className="rule-b bg-sunken px-5 py-3">
+                  <p className="max-w-measure text-xs leading-relaxed text-ink-muted">
                     <span className="font-medium text-ink">
                       {CATEGORY_META[filter].label}.
                     </span>{" "}
@@ -170,45 +179,21 @@ export function ReportView({
                   </p>
                 </div>
               )}
-              <IssueList
-                issues={shown}
-                emptyLabel="Nothing flagged in this category."
-              />
+              <IssueList issues={shown} emptyLabel="Nothing flagged here" />
             </>
           )}
 
           {tab === "rewrites" && <RewritePanel rewrites={result.rewrites} />}
-
           {tab === "extracted" && <ExtractedPanel audit={audit} />}
-        </Card>
+        </Sheet>
       </div>
 
       {publicView && (
-        <p className="mt-6 text-center text-xs text-ink-subtle">
-          Scored against this rubric only. Generated by Conversion Lab.
+        <p className="mt-12 rule-t pt-5 text-center font-mono text-2xs text-ink-subtle">
+          Scored against this rubric only · Generated by Conversion Lab
         </p>
       )}
     </>
-  );
-}
-
-function Vital({
-  label,
-  value,
-  suffix,
-}: {
-  label: string;
-  value: React.ReactNode;
-  suffix?: string;
-}) {
-  return (
-    <div className="flex items-baseline justify-between gap-3 px-4 py-2">
-      <dt className="text-xs text-ink-muted">{label}</dt>
-      <dd className="font-mono text-xs tnum font-medium text-ink">
-        {value}
-        {suffix}
-      </dd>
-    </div>
   );
 }
 
@@ -226,35 +211,35 @@ const SLOT_LABEL: Record<Rewrite["slot"], string> = {
 function RewritePanel({ rewrites }: { rewrites: Rewrite[] }) {
   if (!rewrites.length) {
     return (
-      <div className="p-4">
-        <Callout tone="accent" title="No rewrites on this audit">
+      <div className="p-5">
+        <Note tone="accent" title="No rewrites on this audit">
           Rewrites come from the optional copy layer. Add an Anthropic API key to
           the environment and re-run the audit to get three variants for each
           headline, subhead and call to action, each with the angle it takes and
           why it should outperform the original.
-        </Callout>
+        </Note>
       </div>
     );
   }
 
   return (
-    <div className="divide-y divide-line">
-      {rewrites.map((rewrite) => (
-        <div key={rewrite.slot} className="p-4">
-          <Eyebrow>{SLOT_LABEL[rewrite.slot]}</Eyebrow>
-
-          <div className="mt-2 rounded-sm border border-line bg-sunken px-3 py-2.5">
-            <div className="text-2xs font-medium uppercase tracking-[0.1em] text-ink-subtle">
-              On the page now
-            </div>
-            <p className="mt-1 text-sm leading-relaxed text-ink-muted">
-              {rewrite.original}
-            </p>
+    <div className="divide-y divide-rule">
+      {rewrites.map((rewrite, i) => (
+        <div key={rewrite.slot} className="px-5 py-6">
+          <div className="flex items-baseline gap-3">
+            <span className="font-mono text-2xs tnum text-ink-subtle">
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <Label>{SLOT_LABEL[rewrite.slot]}</Label>
           </div>
 
-          <div className="mt-3 space-y-2">
-            {rewrite.variants.map((variant, i) => (
-              <VariantRow key={i} variant={variant} />
+          <p className="mt-4 max-w-measure border-l-2 border-rule-strong pl-4 text-md leading-relaxed text-ink-muted">
+            {rewrite.original}
+          </p>
+
+          <div className="mt-5 space-y-0 divide-y divide-rule border-y border-rule">
+            {rewrite.variants.map((variant, j) => (
+              <VariantRow key={j} variant={variant} index={j} />
             ))}
           </div>
         </div>
@@ -265,8 +250,10 @@ function RewritePanel({ rewrites }: { rewrites: Rewrite[] }) {
 
 function VariantRow({
   variant,
+  index,
 }: {
   variant: Rewrite["variants"][number];
+  index: number;
 }) {
   const [copied, setCopied] = React.useState(false);
 
@@ -281,12 +268,15 @@ function VariantRow({
   };
 
   return (
-    <div className="group flex items-start gap-3 rounded-sm border border-line px-3 py-2.5 transition-colors duration-fast ease-ease hover:border-line-strong">
+    <div className="group flex items-start gap-4 py-4 transition-colors duration-fast ease-ease hover:bg-surface-hover">
+      <span className="shrink-0 pt-1 font-mono text-2xs text-ink-subtle">
+        {String.fromCharCode(65 + index)}
+      </span>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium leading-relaxed text-ink">{variant.text}</p>
-        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+        <p className="display max-w-measure text-d1 text-ink">{variant.text}</p>
+        <div className="mt-2.5 flex flex-wrap items-center gap-2.5">
           <Badge tone="accent">{variant.angle}</Badge>
-          <span className="text-xs leading-relaxed text-ink-subtle">
+          <span className="max-w-measure text-xs leading-relaxed text-ink-subtle">
             {variant.rationale}
           </span>
         </div>
@@ -294,12 +284,12 @@ function VariantRow({
       <button
         onClick={copy}
         aria-label="Copy this variant"
-        className="shrink-0 rounded-sm p-1.5 text-ink-subtle transition-colors duration-fast ease-ease hover:bg-surface-hover hover:text-ink"
+        className="shrink-0 p-1 text-ink-subtle opacity-0 transition-opacity duration-fast ease-ease hover:text-ink focus-visible:opacity-100 group-hover:opacity-100"
       >
         {copied ? (
           <Check className="h-3.5 w-3.5 text-pass" strokeWidth={2.5} />
         ) : (
-          <Copy className="h-3.5 w-3.5" strokeWidth={1.75} />
+          <Copy className="h-3.5 w-3.5" strokeWidth={1.5} />
         )}
       </button>
     </div>
@@ -315,11 +305,11 @@ function ExtractedPanel({ audit }: { audit: Audit }) {
   const { extracted } = audit.result;
 
   return (
-    <div className="divide-y divide-line">
+    <div className="divide-y divide-rule">
       <Section label="Headline">
         {extracted.h1.length ? (
           extracted.h1.map((h, i) => (
-            <p key={i} className="text-sm leading-relaxed text-ink">
+            <p key={i} className="display max-w-measure text-d1 text-ink">
               {h}
             </p>
           ))
@@ -330,7 +320,9 @@ function ExtractedPanel({ audit }: { audit: Audit }) {
 
       <Section label="Title tag">
         {extracted.title ? (
-          <p className="text-sm text-ink">{extracted.title}</p>
+          <p className="max-w-measure text-sm leading-relaxed text-ink">
+            {extracted.title}
+          </p>
         ) : (
           <Missing>Not set</Missing>
         )}
@@ -338,7 +330,7 @@ function ExtractedPanel({ audit }: { audit: Audit }) {
 
       <Section label="Meta description">
         {extracted.metaDescription ? (
-          <p className="text-sm leading-relaxed text-ink-muted">
+          <p className="max-w-measure text-sm leading-relaxed text-ink-muted">
             {extracted.metaDescription}
           </p>
         ) : (
@@ -346,11 +338,11 @@ function ExtractedPanel({ audit }: { audit: Audit }) {
         )}
       </Section>
 
-      <Section label={`Calls to action (${extracted.ctas.length})`}>
+      <Section label={`Calls to action · ${extracted.ctas.length}`}>
         {extracted.ctas.length ? (
           <div className="flex flex-wrap gap-1.5">
             {extracted.ctas.map((cta, i) => (
-              <Badge key={i} tone="neutral">
+              <Badge key={i} tone="neutral" mono>
                 {cta.text}
               </Badge>
             ))}
@@ -360,16 +352,18 @@ function ExtractedPanel({ audit }: { audit: Audit }) {
         )}
       </Section>
 
-      <Section label={`Proof signals (${extracted.proofSignals.length})`}>
+      <Section label={`Proof signals · ${extracted.proofSignals.length}`}>
         {extracted.proofSignals.length ? (
-          <ul className="space-y-1.5">
+          <ul className="space-y-2">
             {extracted.proofSignals.map((p, i) => (
-              <li key={i} className="text-xs leading-relaxed text-ink-muted">
-                <span className="font-mono text-2xs uppercase tracking-wide text-accent">
+              <li
+                key={i}
+                className="grid max-w-measure gap-1 text-xs leading-relaxed text-ink-muted sm:grid-cols-[6rem_minmax(0,1fr)] sm:gap-3"
+              >
+                <span className="font-mono text-2xs uppercase tracking-[0.08em] text-accent">
                   {p.kind}
                 </span>
-                <span className="mx-1.5 text-ink-subtle">·</span>
-                {p.evidence}
+                <span>{p.evidence}</span>
               </li>
             ))}
           </ul>
@@ -378,7 +372,7 @@ function ExtractedPanel({ audit }: { audit: Audit }) {
         )}
       </Section>
 
-      <Section label={`Form fields (${extracted.formFields.length})`}>
+      <Section label={`Form fields · ${extracted.formFields.length}`}>
         {extracted.formFields.length ? (
           <div className="flex flex-wrap gap-1.5">
             {extracted.formFields.map((f, i) => (
@@ -393,13 +387,13 @@ function ExtractedPanel({ audit }: { audit: Audit }) {
         )}
       </Section>
 
-      <Section label={`Section headings (${extracted.headings.length})`}>
+      <Section label={`Heading outline · ${extracted.headings.length}`}>
         <ol className="space-y-1">
-          {extracted.headings.slice(0, 20).map((h, i) => (
+          {extracted.headings.slice(0, 22).map((h, i) => (
             <li
               key={i}
-              className="flex gap-2 text-xs leading-relaxed text-ink-muted"
-              style={{ paddingLeft: `${(h.level - 1) * 12}px` }}
+              className="flex max-w-measure gap-3 text-xs leading-relaxed text-ink-muted"
+              style={{ paddingLeft: `${(h.level - 1) * 14}px` }}
             >
               <span className="shrink-0 font-mono text-2xs text-ink-subtle">
                 H{h.level}
@@ -413,17 +407,11 @@ function ExtractedPanel({ audit }: { audit: Audit }) {
   );
 }
 
-function Section({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="px-4 py-3.5">
-      <Eyebrow className="mb-2">{label}</Eyebrow>
-      {children}
+    <div className="grid gap-2 px-5 py-5 sm:grid-cols-[8.5rem_minmax(0,1fr)] sm:gap-6">
+      <Label className="pt-1">{label}</Label>
+      <div className="min-w-0">{children}</div>
     </div>
   );
 }

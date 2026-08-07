@@ -1,12 +1,14 @@
 import { Link, useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { Button, Card, EmptyState, Skeleton } from "@/components/ui";
+import { Button, EmptyState, Sheet, Skeleton } from "@/components/ui";
 import { ReportView } from "@/components/app/report-view";
 import { Wordmark } from "@/components/app/shell";
 
 /**
- * The public face of a report. No navigation rail, no run bar, no delete - * a share link should read as a document, not as somebody else's dashboard.
+ * The public face of a report. No navigation, no run bar, no delete. A share
+ * link should read as a document somebody sent you, not as a login screen to
+ * somebody else's dashboard.
  */
 export default function Shared() {
   const [, params] = useRoute("/r/:token");
@@ -20,9 +22,11 @@ export default function Shared() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <header className="border-b border-line bg-surface">
-        <div className="mx-auto flex max-w-shell items-center justify-between px-4 py-3 lg:px-8">
-          <Wordmark />
+      <header className="rule-b">
+        <div className="mx-auto flex max-w-shell items-center justify-between gap-4 px-5 py-5 lg:px-10">
+          <Link href="/">
+            <Wordmark compact />
+          </Link>
           <Link href="/">
             <Button size="sm" variant="secondary">
               Audit your own page
@@ -31,18 +35,18 @@ export default function Shared() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-shell px-4 py-8 lg:px-8">
+      <main className="mx-auto max-w-shell px-5 py-12 lg:px-10">
         {isLoading ? (
           <>
-            <Skeleton className="mb-6 h-52 w-full" />
-            <Skeleton className="h-96 w-full" />
+            <Skeleton className="mb-10 h-14 w-2/3" />
+            <Skeleton className="h-[30rem] w-full" />
           </>
         ) : isError || !audit ? (
-          <Card>
-            <EmptyState title="This report link is not valid">
+          <Sheet>
+            <EmptyState title="This link is not valid">
               It may have expired, or the audit behind it was deleted.
             </EmptyState>
-          </Card>
+          </Sheet>
         ) : (
           <ReportView audit={audit} publicView />
         )}

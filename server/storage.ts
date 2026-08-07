@@ -8,7 +8,7 @@ import {
   type Audit,
   type AuditResult,
   type Weights,
-} from "@shared/schema";
+} from "../shared/schema";
 import { SEED_AUDITS } from "./seed";
 
 /**

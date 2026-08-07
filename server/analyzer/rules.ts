@@ -1,4 +1,4 @@
-import type { CategoryKey, Issue, Severity } from "@shared/schema";
+import type { CategoryKey, Issue, Severity } from "../../shared/schema";
 import type { ExtractOutput } from "./extract";
 import { CTA_HELPERS } from "./extract";
 

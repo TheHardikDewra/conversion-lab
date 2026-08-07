@@ -6,7 +6,7 @@ import {
   type CategoryScore,
   type Issue,
   type Weights,
-} from "@shared/schema";
+} from "../../shared/schema";
 import { fetchPage, FetchError } from "./fetch";
 import { extractPage } from "./extract";
 import { runRules, RULE_COUNT } from "./rules";

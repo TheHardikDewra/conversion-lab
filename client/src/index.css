@@ -3,13 +3,18 @@
 @tailwind utilities;
 
 /* ==========================================================================
-   CONVERSION LAB — DESIGN SYSTEM
+   CONVERSION LAB - DESIGN SYSTEM
    --------------------------------------------------------------------------
+   The premise: a CRO audit is a report, so it should be typeset like one.
+   Instrument Serif carries the display voice, Geist carries the interface,
+   Geist Mono carries every number. Structure comes from hairline rules and
+   margin, not from boxes inside boxes.
+
    Layer 1  primitives   raw, unopinionated scales. Never used directly in UI.
    Layer 2  semantics    role-based tokens. This is what components consume.
    Layer 3  components   only where a pattern needs its own knob.
 
-   Rebrand rule: change Layer 1 + the accent ramp, and the entire app follows.
+   Rebrand rule: change Layer 1 and the whole app follows, both themes.
    Constraint: flat colour only. No gradients, no glows, no coloured shadows.
    ========================================================================== */
 
@@ -17,74 +22,73 @@
   :root {
     /* ----- Layer 1: primitives ------------------------------------------ */
 
-    /* Neutral ramp — warm bone through cold ink */
-    --bone-50: 48 33% 99%;
-    --bone-100: 45 24% 97%;
-    --bone-200: 42 16% 94%;
-    --bone-300: 40 12% 88%;
-    --bone-400: 38 8% 78%;
-    --graphite-500: 36 5% 58%;
-    --graphite-600: 34 5% 42%;
-    --ink-700: 30 5% 26%;
-    --ink-800: 30 6% 15%;
-    --ink-900: 40 6% 7%;
-    --ink-950: 40 7% 4%;
+    /* Paper through ink. Warm at the light end, neutral-cold at the dark end,
+       the way real printing stock and real printing ink actually behave. */
+    --paper-50: 45 40% 99%;
+    --paper-100: 44 32% 97%;
+    --paper-200: 42 22% 94%;
+    --paper-300: 40 16% 89%;
+    --paper-400: 38 11% 80%;
+    --grey-500: 36 6% 60%;
+    --grey-600: 34 5% 44%;
+    --ink-700: 30 5% 28%;
+    --ink-800: 28 6% 14%;
+    --ink-900: 30 7% 8%;
+    --ink-950: 30 8% 4%;
 
-    /* Accent ramp — vermilion */
-    --accent-100: 16 92% 94%;
-    --accent-200: 16 90% 86%;
-    --accent-400: 16 88% 58%;
-    --accent-500: 16 88% 45%;
-    --accent-600: 16 90% 38%;
-    --accent-700: 16 88% 30%;
+    /* Accent: ultramarine. Editorial, precise, and deliberately not the
+       terracotta every generated interface reaches for. */
+    --ultra-100: 232 100% 96%;
+    --ultra-200: 232 96% 90%;
+    --ultra-400: 232 88% 62%;
+    --ultra-500: 232 84% 52%;
+    --ultra-600: 232 82% 44%;
 
-    /* Semantic data ramp — used for scores and severities only */
-    --signal-critical: 6 68% 47%;
-    --signal-critical-soft: 6 78% 95%;
-    --signal-warn: 36 92% 38%;
-    --signal-warn-soft: 40 90% 94%;
-    --signal-pass: 154 60% 30%;
-    --signal-pass-soft: 152 52% 94%;
-    --signal-info: 214 72% 44%;
-    --signal-info-soft: 214 80% 95%;
+    /* Data signals. Muted toward print inks rather than screen candy. */
+    --signal-critical: 4 66% 46%;
+    --signal-critical-soft: 6 72% 96%;
+    --signal-warn: 32 78% 40%;
+    --signal-warn-soft: 38 84% 95%;
+    --signal-pass: 156 46% 30%;
+    --signal-pass-soft: 152 44% 95%;
+    --signal-info: 232 84% 52%;
+    --signal-info-soft: 232 100% 96%;
 
     /* ----- Layer 2: semantics (light) ----------------------------------- */
-    --bg: var(--bone-100);
-    --bg-sunken: var(--bone-200);
-    --surface: 0 0% 100%;
+    --bg: var(--paper-100);
+    --bg-sunken: var(--paper-200);
+    --surface: 45 50% 99.5%;
     --surface-raised: 0 0% 100%;
-    --surface-hover: var(--bone-100);
-    --surface-active: var(--bone-200);
+    --surface-hover: var(--paper-100);
+    --surface-active: var(--paper-200);
 
-    --border: var(--bone-300);
-    --border-strong: var(--bone-400);
-    --border-focus: var(--accent-500);
+    --rule: var(--paper-300);
+    --rule-strong: var(--paper-400);
+    --border-focus: var(--ultra-500);
 
     --text: var(--ink-900);
-    --text-muted: var(--graphite-600);
-    --text-subtle: var(--graphite-500);
-    --text-inverse: var(--bone-50);
+    --text-muted: var(--grey-600);
+    --text-subtle: var(--grey-500);
+    --text-inverse: var(--paper-50);
 
-    --accent: var(--accent-500);
-    --accent-hover: var(--accent-600);
-    --accent-quiet: var(--accent-100);
+    --accent: var(--ultra-500);
+    --accent-hover: var(--ultra-600);
+    --accent-quiet: var(--ultra-100);
     --accent-on: 0 0% 100%;
 
     /* ----- Layer 3: component knobs ------------------------------------- */
-    --radius-xs: 3px;
-    --radius-sm: 5px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
+    --radius-xs: 2px;
+    --radius-sm: 3px;
+    --radius-md: 5px;
+    --radius-lg: 8px;
 
     --ring-width: 2px;
 
-    --dur-fast: 120ms;
+    --dur-fast: 110ms;
     --dur-base: 180ms;
-    --dur-slow: 260ms;
+    --dur-slow: 300ms;
     --ease: cubic-bezier(0.2, 0, 0, 1);
-
-    /* Grid rhythm — everything snaps to 4px */
-    --unit: 4px;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
     color-scheme: light;
   }
@@ -92,40 +96,40 @@
   .dark {
     /* ----- Layer 2: semantics (dark) ------------------------------------ */
     --bg: var(--ink-950);
-    --bg-sunken: 40 7% 3%;
+    --bg-sunken: 30 8% 3%;
     --surface: var(--ink-900);
     --surface-raised: var(--ink-800);
-    --surface-hover: var(--ink-800);
-    --surface-active: var(--ink-700);
+    --surface-hover: 28 6% 11%;
+    --surface-active: var(--ink-800);
 
-    --border: 36 5% 16%;
-    --border-strong: 34 5% 26%;
+    --rule: 30 5% 15%;
+    --rule-strong: 30 5% 25%;
 
-    --text: var(--bone-100);
-    --text-muted: var(--bone-400);
-    --text-subtle: var(--graphite-500);
-    --text-inverse: var(--ink-900);
+    --text: var(--paper-100);
+    --text-muted: var(--paper-400);
+    --text-subtle: var(--grey-500);
+    --text-inverse: var(--ink-950);
 
-    --accent: var(--accent-400);
-    --accent-hover: 16 88% 65%;
-    --accent-quiet: 16 60% 14%;
-    --accent-on: var(--ink-950);
+    --accent: var(--ultra-400);
+    --accent-hover: 232 92% 72%;
+    --accent-quiet: 232 60% 15%;
+    --accent-on: 0 0% 100%;
 
-    /* Signals re-tuned so they hold contrast on ink */
-    --signal-critical: 6 76% 62%;
-    --signal-critical-soft: 6 45% 15%;
-    --signal-warn: 38 88% 58%;
-    --signal-warn-soft: 38 50% 13%;
-    --signal-pass: 154 52% 52%;
-    --signal-pass-soft: 154 40% 12%;
-    --signal-info: 214 82% 66%;
-    --signal-info-soft: 214 50% 14%;
+    /* Re-tuned rather than dimmed, so contrast survives the inversion. */
+    --signal-critical: 4 78% 62%;
+    --signal-critical-soft: 4 40% 14%;
+    --signal-warn: 36 86% 58%;
+    --signal-warn-soft: 34 44% 12%;
+    --signal-pass: 154 48% 50%;
+    --signal-pass-soft: 154 36% 11%;
+    --signal-info: 232 88% 68%;
+    --signal-info-soft: 232 50% 14%;
 
     color-scheme: dark;
   }
 
   * {
-    border-color: hsl(var(--border));
+    border-color: hsl(var(--rule));
   }
 
   html {
@@ -143,14 +147,14 @@
     transition: background-color var(--dur-base) var(--ease);
   }
 
-  /* Tabular numerals everywhere a number can change */
+  /* Tabular numerals anywhere a figure can change, so nothing shifts. */
   .tnum {
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum";
   }
 
   ::selection {
-    background-color: hsl(var(--accent) / 0.22);
+    background-color: hsl(var(--accent) / 0.2);
   }
 
   :focus-visible {
@@ -158,17 +162,16 @@
     outline-offset: 2px;
   }
 
-  /* Scrollbars — thin, achromatic, theme-aware */
   ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 11px;
+    height: 11px;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--border-strong));
-    border: 3px solid hsl(var(--bg));
+    background: hsl(var(--rule-strong));
+    border: 3.5px solid hsl(var(--bg));
     border-radius: 999px;
   }
   ::-webkit-scrollbar-thumb:hover {
@@ -177,34 +180,60 @@
 }
 
 @layer components {
-  /* Hairline grid used behind hero numbers — flat, no gradient */
-  .grid-rule {
-    background-image: linear-gradient(
-        to right,
-        hsl(var(--border)) 1px,
-        transparent 1px
-      ),
-      linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px);
-    background-size: 32px 32px;
+  /* The display voice. Instrument Serif is high-contrast and narrow, so it
+     wants tight tracking and a slightly lifted optical size. */
+  .display {
+    font-family: "Instrument Serif", ui-serif, Georgia, serif;
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    line-height: 0.94;
+  }
+
+  /* Small caps label used to head every section. The tracking is what makes
+     it read as a printed label rather than shouty UI text. */
+  .label {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: hsl(var(--text-subtle));
+  }
+
+  /* A hairline that survives fractional device pixel ratios. */
+  .rule-t {
+    border-top: 1px solid hsl(var(--rule));
+  }
+  .rule-b {
+    border-bottom: 1px solid hsl(var(--rule));
   }
 }
 
 @layer utilities {
-  .animate-in-up {
-    animation: in-up var(--dur-slow) var(--ease) both;
+  .animate-rise {
+    animation: rise var(--dur-slow) var(--ease-out) both;
   }
   .animate-in-fade {
-    animation: in-fade var(--dur-slow) var(--ease) both;
+    animation: in-fade var(--dur-base) var(--ease) both;
   }
-  .animate-sweep {
-    animation: sweep 1.1s var(--ease) both;
+  /* Rows enter in sequence so a long list reads as one movement. */
+  .stagger > * {
+    animation: rise 420ms var(--ease-out) both;
   }
+  .stagger > *:nth-child(1) { animation-delay: 0ms; }
+  .stagger > *:nth-child(2) { animation-delay: 26ms; }
+  .stagger > *:nth-child(3) { animation-delay: 52ms; }
+  .stagger > *:nth-child(4) { animation-delay: 78ms; }
+  .stagger > *:nth-child(5) { animation-delay: 104ms; }
+  .stagger > *:nth-child(6) { animation-delay: 130ms; }
+  .stagger > *:nth-child(7) { animation-delay: 156ms; }
+  .stagger > *:nth-child(8) { animation-delay: 182ms; }
+  .stagger > *:nth-child(n + 9) { animation-delay: 200ms; }
 }
 
-@keyframes in-up {
+@keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(7px);
   }
   to {
     opacity: 1;
@@ -213,18 +242,16 @@
 }
 
 @keyframes in-fade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-@keyframes sweep {
-  from {
-    stroke-dashoffset: var(--dash-total);
-  }
+/* The gauge marker travels to its reading, the way a needle settles. */
+@keyframes gauge-fill {
+  from { transform: scaleX(0); }
+}
+@keyframes gauge-mark {
+  from { opacity: 0; transform: translateX(-6px); }
 }
 
 @media (prefers-reduced-motion: reduce) {

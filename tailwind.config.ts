@@ -2,7 +2,7 @@ import type { Config } from "tailwindcss";
 
 /**
  * Tailwind is a thin mapping over the CSS variables in client/src/index.css.
- * Nothing here hardcodes a colour — rebranding happens in one place.
+ * Nothing here hardcodes a colour, so rebranding happens in one place.
  */
 const config: Config = {
   darkMode: "class",
@@ -18,9 +18,9 @@ const config: Config = {
           hover: "hsl(var(--surface-hover))",
           active: "hsl(var(--surface-active))",
         },
-        line: {
-          DEFAULT: "hsl(var(--border))",
-          strong: "hsl(var(--border-strong))",
+        rule: {
+          DEFAULT: "hsl(var(--rule))",
+          strong: "hsl(var(--rule-strong))",
         },
         ink: {
           DEFAULT: "hsl(var(--text))",
@@ -52,6 +52,7 @@ const config: Config = {
         },
       },
       fontFamily: {
+        serif: ["Instrument Serif", "ui-serif", "Georgia", "serif"],
         sans: [
           "Geist",
           "ui-sans-serif",
@@ -69,18 +70,22 @@ const config: Config = {
         ],
       },
       fontSize: {
-        // A tight modular scale. Line heights are baked in.
+        // Editorial scale: big jumps at the display end, tight steps at the
+        // interface end. The gap between a title and body text is the whole
+        // point, so display sizes are deliberately far from 14px.
         "2xs": ["0.6875rem", { lineHeight: "1rem", letterSpacing: "0.04em" }],
-        xs: ["0.75rem", { lineHeight: "1.125rem", letterSpacing: "0.01em" }],
+        xs: ["0.75rem", { lineHeight: "1.15rem", letterSpacing: "0.005em" }],
         sm: ["0.8125rem", { lineHeight: "1.25rem" }],
-        base: ["0.875rem", { lineHeight: "1.4375rem" }],
-        md: ["0.9375rem", { lineHeight: "1.5rem" }],
-        lg: ["1.0625rem", { lineHeight: "1.625rem", letterSpacing: "-0.01em" }],
-        xl: ["1.3125rem", { lineHeight: "1.875rem", letterSpacing: "-0.015em" }],
-        "2xl": ["1.75rem", { lineHeight: "2.125rem", letterSpacing: "-0.02em" }],
-        "3xl": ["2.25rem", { lineHeight: "2.5rem", letterSpacing: "-0.025em" }],
-        "4xl": ["3rem", { lineHeight: "3.125rem", letterSpacing: "-0.03em" }],
-        "5xl": ["4rem", { lineHeight: "4rem", letterSpacing: "-0.035em" }],
+        base: ["0.875rem", { lineHeight: "1.45rem" }],
+        md: ["0.9375rem", { lineHeight: "1.55rem" }],
+        lg: ["1.0625rem", { lineHeight: "1.6rem", letterSpacing: "-0.008em" }],
+        // Display steps, for Instrument Serif.
+        d1: ["1.5rem", { lineHeight: "1.05", letterSpacing: "-0.01em" }],
+        d2: ["2rem", { lineHeight: "1", letterSpacing: "-0.015em" }],
+        d3: ["2.75rem", { lineHeight: "0.98", letterSpacing: "-0.018em" }],
+        d4: ["3.75rem", { lineHeight: "0.94", letterSpacing: "-0.02em" }],
+        d5: ["6rem", { lineHeight: "0.86", letterSpacing: "-0.025em" }],
+        d6: ["8.5rem", { lineHeight: "0.82", letterSpacing: "-0.03em" }],
       },
       borderRadius: {
         xs: "var(--radius-xs)",
@@ -89,16 +94,17 @@ const config: Config = {
         lg: "var(--radius-lg)",
       },
       spacing: {
-        // 4px rhythm, named for intent
         gutter: "1.5rem",
-        rail: "15rem",
+        rail: "13.5rem",
       },
       maxWidth: {
-        shell: "78rem",
-        prose: "42rem",
+        shell: "82rem",
+        prose: "38rem",
+        measure: "46rem",
       },
       transitionTimingFunction: {
         ease: "var(--ease)",
+        "ease-out": "var(--ease-out)",
       },
       transitionDuration: {
         fast: "var(--dur-fast)",
@@ -106,9 +112,9 @@ const config: Config = {
         slow: "var(--dur-slow)",
       },
       boxShadow: {
-        // Deliberately minimal. Elevation comes from borders and surface steps,
-        // never from glows. Exactly one shadow exists, for floating layers.
-        pop: "0 1px 2px hsl(0 0% 0% / 0.06), 0 8px 24px hsl(0 0% 0% / 0.10)",
+        // Elevation is borders and surface steps. Exactly one shadow exists,
+        // for layers that genuinely float above the page.
+        pop: "0 1px 2px hsl(0 0% 0% / 0.05), 0 10px 30px hsl(0 0% 0% / 0.10)",
         none: "none",
       },
     },

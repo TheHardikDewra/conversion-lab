@@ -1,28 +1,31 @@
 import * as React from "react";
 import { Link, useLocation } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ArrowRight, Search, Trash2, Sparkles } from "lucide-react";
+import { ArrowRight, Trash2 } from "lucide-react";
 import type { Audit } from "@shared/schema";
 import { api, ApiError, queryClient } from "@/lib/api";
 import { cn, hostOf, relativeTime, scoreTone, TONE_TEXT } from "@/lib/utils";
 import {
   Badge,
   Button,
-  Callout,
-  Card,
-  CardHeader,
   EmptyState,
   Input,
+  Label,
+  Note,
+  SectionHead,
+  Sheet,
   Skeleton,
   Stat,
 } from "@/components/ui";
 import { PageHeader } from "@/components/app/shell";
-import { ScoreRing, Sparkline, ScoreHistogram } from "@/components/app/charts";
+import { ScoreMark, Sparkline, ScoreHistogram } from "@/components/app/charts";
 
 export default function Dashboard() {
   const [, navigate] = useLocation();
   const [url, setUrl] = React.useState("");
-  const [error, setError] = React.useState<{ message: string; hint?: string } | null>(null);
+  const [error, setError] = React.useState<{ message: string; hint?: string } | null>(
+    null,
+  );
 
   const { data: config } = useQuery({ queryKey: ["config"], queryFn: api.config });
   const { data: audits, isLoading } = useQuery({
@@ -58,48 +61,53 @@ export default function Dashboard() {
     (sum, a) => sum + a.result.issues.filter((i) => i.severity !== "pass").length,
     0,
   );
-  // Oldest first, so the line reads left to right in time order.
   const trend = [...(audits ?? [])].reverse().map((a) => a.score);
 
   return (
     <>
       <PageHeader
-        eyebrow="Conversion Lab"
-        title="Landing page teardowns that score"
+        label="Conversion Lab"
+        size="d4"
+        title={
+          <>
+            Landing page teardowns
+            <br />
+            <span className="italic text-ink-muted">that score.</span>
+          </>
+        }
         description={
           <>
-            Paste a URL. The rulebook checks {config?.ruleCount ?? 31} conversion
-            heuristics against the live page and scores it across six categories,
-            with the evidence it used and a fix for every finding.
+            Paste a URL. {config?.ruleCount ?? 35} conversion checks run against the
+            live page and score it across six categories, with the evidence behind
+            every finding and a fix for each one.
           </>
         }
       />
 
-      <Card className="mb-6">
+      {/* ---- Run bar -------------------------------------------------------- */}
+      <div className="mb-12 animate-rise">
         <form
           onSubmit={(e) => {
             e.preventDefault();
             if (url.trim()) run.mutate(url.trim());
           }}
-          className="flex flex-col gap-2 p-3 sm:flex-row"
+          className="flex flex-col gap-4 sm:flex-row sm:items-end"
         >
-          <div className="relative flex-1">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-subtle"
-              strokeWidth={1.75}
-            />
+          <div className="flex-1">
+            <Label className="mb-2 block">Page to audit</Label>
             <Input
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="yourlandingpage.com"
               aria-label="Landing page URL to audit"
-              className="pl-9"
               disabled={run.isPending}
+              className="font-mono"
             />
           </div>
           <Button
             type="submit"
             variant="primary"
+            size="lg"
             loading={run.isPending}
             disabled={!url.trim()}
           >
@@ -109,17 +117,17 @@ export default function Dashboard() {
         </form>
 
         {error && (
-          <div className="border-t border-line p-3">
-            <Callout tone="critical" title={error.message}>
+          <div className="mt-4">
+            <Note tone="critical" title={error.message}>
               {error.hint}
-            </Callout>
+            </Note>
           </div>
         )}
-      </Card>
+      </div>
 
       {config && !config.aiEnabled && (
-        <div className="mb-6">
-          <Callout
+        <div className="mb-12">
+          <Note
             tone="accent"
             title="The copy layer is off"
             action={
@@ -128,144 +136,140 @@ export default function Dashboard() {
               </Badge>
             }
           >
-            Every score, finding and fix on this page came from the rulebook, with
-            no API key and no external service. Add an Anthropic key in Secrets and
-            new audits also get a written verdict and three rewrites for each
-            headline, subhead and CTA.
-          </Callout>
+            Every score, finding and fix here came from the rulebook, with no API key
+            and no external service. Add an Anthropic key in Secrets and new audits
+            also get a written verdict and three rewrites for each headline, subhead
+            and CTA.
+          </Note>
         </div>
       )}
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <Card className="divide-y divide-line">
+      {/* ---- Summary -------------------------------------------------------- */}
+      <div className="mb-12 grid gap-px overflow-hidden rounded-md border border-rule bg-rule sm:grid-cols-3">
+        <div className="bg-surface">
           <Stat
             label="Average score"
             value={average}
             suffix="/100"
             tone={TONE_TEXT[scoreTone(average)]}
           />
-        </Card>
-        <Card>
-          <div className="px-4 py-3">
-            <div className="text-2xs font-medium uppercase tracking-[0.1em] text-ink-subtle">
-              Score history
-            </div>
-            <div className="mt-1">
-              <Sparkline points={trend} />
-            </div>
+        </div>
+        <div className="bg-surface px-5 py-4">
+          <Label>Score history</Label>
+          <div className="mt-3">
+            <Sparkline points={trend} />
           </div>
-        </Card>
-        <Card>
-          <div className="border-b border-line px-4 pt-3">
-            <div className="text-2xs font-medium uppercase tracking-[0.1em] text-ink-subtle">
-              Distribution
-            </div>
+        </div>
+        <div className="bg-surface">
+          <div className="px-5 pt-4">
+            <Label>Distribution</Label>
           </div>
           <ScoreHistogram scores={scores} />
-        </Card>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader
-          title="Audits"
-          subtitle={
+      {/* ---- Index ---------------------------------------------------------- */}
+      <Sheet>
+        <SectionHead
+          label="Index"
+          title={
             audits?.length
-              ? `${audits.length} page${audits.length === 1 ? "" : "s"}, ${totalIssues} open findings`
-              : undefined
+              ? `${audits.length} page${audits.length === 1 ? "" : "s"} audited`
+              : "Audits"
+          }
+          note={
+            audits?.length ? `${totalIssues} findings still open across all reports` : undefined
           }
         />
         {isLoading ? (
-          <div className="space-y-px">
+          <div className="divide-y divide-rule">
             {[0, 1, 2].map((i) => (
-              <Skeleton key={i} className="h-[72px] rounded-none" />
+              <Skeleton key={i} className="h-[86px]" />
             ))}
           </div>
         ) : !audits?.length ? (
-          <EmptyState title="No audits yet">
-            Paste a landing page URL above to run the first one.
+          <EmptyState title="Nothing audited yet">
+            Paste a landing page URL above to run the first report.
           </EmptyState>
         ) : (
-          <div>
-            {audits.map((audit) => (
+          <div className="stagger divide-y divide-rule">
+            {audits.map((audit, i) => (
               <AuditRow
                 key={audit.id}
                 audit={audit}
-                onDelete={
-                  audit.isSample ? undefined : () => remove.mutate(audit.id)
-                }
+                index={i}
+                onDelete={audit.isSample ? undefined : () => remove.mutate(audit.id)}
               />
             ))}
           </div>
         )}
-      </Card>
+      </Sheet>
     </>
   );
 }
 
 function AuditRow({
   audit,
+  index,
   onDelete,
 }: {
   audit: Audit;
+  index: number;
   onDelete?: () => void;
 }) {
   const open = audit.result.issues.filter((i) => i.severity !== "pass");
   const critical = open.filter((i) => i.severity === "critical").length;
-  // Colour the finding count by what it says, not by the page's overall score.
-  // A green "3 critical" is worse than no colour at all.
+  // Colour by what the number says, not by the page's overall score.
   const countTone = critical > 0 ? "critical" : open.length > 0 ? "warn" : "pass";
 
   return (
-    <div className="group flex items-center gap-4 border-b border-line px-4 py-3 transition-colors duration-fast ease-ease last:border-b-0 hover:bg-surface-hover">
+    <div className="group relative flex items-center gap-5 px-5 py-5 transition-colors duration-fast ease-ease hover:bg-surface-hover">
+      <span className="hidden shrink-0 font-mono text-2xs tnum text-ink-subtle sm:block">
+        {String(index + 1).padStart(2, "0")}
+      </span>
+
       <Link
         href={`/audit/${audit.id}`}
-        className="flex min-w-0 flex-1 items-center gap-4"
+        className="flex min-w-0 flex-1 items-center gap-5"
       >
-          <ScoreRing score={audit.score} grade={audit.grade} size={44} animate={false} />
+        <ScoreMark score={audit.score} grade={audit.grade} />
 
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="truncate text-sm font-medium text-ink">
-                {hostOf(audit.finalUrl)}
-              </span>
-              {audit.isSample && <Badge tone="neutral">Sample</Badge>}
-              {audit.result.engine === "heuristic+ai" && (
-                <Badge tone="accent">
-                  <Sparkles className="h-2.5 w-2.5" strokeWidth={2} />
-                  Copy layer
-                </Badge>
-              )}
-            </div>
-            <p className="mt-0.5 truncate text-xs text-ink-subtle">
-              {audit.pageTitle ?? audit.finalUrl}
-            </p>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+            <span className="truncate font-mono text-sm text-ink">
+              {hostOf(audit.finalUrl)}
+            </span>
+            {audit.isSample && <Badge tone="neutral">Sample</Badge>}
+            {audit.result.engine === "heuristic+ai" && (
+              <Badge tone="accent">Copy layer</Badge>
+            )}
           </div>
+          <p className="mt-1 max-w-measure truncate text-sm text-ink-subtle">
+            {audit.pageTitle ?? audit.finalUrl}
+          </p>
+        </div>
 
-          <div className="hidden shrink-0 items-center gap-4 sm:flex">
-            <div className="text-right">
-              <div
-                className={cn("font-mono text-xs tnum font-semibold", TONE_TEXT[countTone])}
-              >
-                {critical > 0
-                  ? `${critical} critical`
-                  : open.length > 0
-                    ? `${open.length} to fix`
-                    : "all clear"}
-              </div>
-              <div className="mt-0.5 font-mono text-2xs tnum text-ink-subtle">
-                {relativeTime(audit.createdAt)}
-              </div>
-            </div>
+        <div className="hidden shrink-0 text-right sm:block">
+          <div className={cn("font-mono text-xs tnum font-medium", TONE_TEXT[countTone])}>
+            {critical > 0
+              ? `${critical} critical`
+              : open.length > 0
+                ? `${open.length} to fix`
+                : "all clear"}
           </div>
+          <div className="mt-1 font-mono text-2xs tnum text-ink-subtle">
+            {relativeTime(audit.createdAt)}
+          </div>
+        </div>
       </Link>
 
       {onDelete && (
         <button
           onClick={onDelete}
           aria-label={`Delete audit for ${hostOf(audit.finalUrl)}`}
-          className="shrink-0 rounded-sm p-1.5 text-ink-subtle opacity-0 transition-all duration-fast ease-ease hover:bg-critical-soft hover:text-critical focus-visible:opacity-100 group-hover:opacity-100"
+          className="shrink-0 p-1.5 text-ink-subtle opacity-0 transition-all duration-fast ease-ease hover:text-critical focus-visible:opacity-100 group-hover:opacity-100"
         >
-          <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+          <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
         </button>
       )}
     </div>

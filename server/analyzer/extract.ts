@@ -1,5 +1,5 @@
 import * as cheerio from "cheerio";
-import type { Extracted, Metrics } from "@shared/schema";
+import type { Extracted, Metrics } from "../../shared/schema";
 import type { FetchedPage } from "./fetch";
 
 /**

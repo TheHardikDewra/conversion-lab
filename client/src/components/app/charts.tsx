@@ -1,81 +1,114 @@
-import { cn, scoreTone, TONE_TEXT, TONE_BG } from "@/lib/utils";
+import { cn, scoreTone, TONE_TEXT, TONE_BG, TONE_BORDER } from "@/lib/utils";
 
 /* ==========================================================================
-   CHARTS
+   MARKS
    --------------------------------------------------------------------------
-   Hand-drawn SVG rather than a charting library. Three reasons: the bundle
-   stays small, the marks stay crisp at every size, and a remixer can read the
-   geometry instead of a config object. No gradients and no curve smoothing - a value is drawn where it actually sits.
+   Every mark here is hand-drawn. No charting library, no gradients, no curve
+   smoothing, and no donuts. The score reads as an instrument reading taken
+   against a calibrated scale, because that is what it is.
    ========================================================================== */
 
-export function ScoreRing({
+const MAJOR = [0, 20, 40, 60, 80, 100];
+
+/**
+ * The hero. A typeset figure over a calibrated rail.
+ *
+ * Built from elements rather than SVG on purpose: the rail is full-width and
+ * fluid, and a stretched viewBox would distort both the ticks and the labels.
+ * This way every hairline lands on a real device pixel at any width.
+ */
+export function ScoreGauge({
   score,
   grade,
-  size = 168,
   animate = true,
 }: {
   score: number;
   grade: string;
-  size?: number;
   animate?: boolean;
 }) {
-  const stroke = size < 80 ? 5 : 9;
-  const r = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * r;
-  const filled = (Math.max(0, Math.min(100, score)) / 100) * circumference;
   const tone = scoreTone(score);
+  const clamped = Math.max(0, Math.min(100, score));
 
   return (
     <div
-      className="relative inline-flex shrink-0 items-center justify-center"
-      style={{ width: size, height: size }}
+      className="w-full"
       role="img"
       aria-label={`Score ${score} out of 100, grade ${grade}`}
     >
-      <svg width={size} height={size} className="-rotate-90">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke="hsl(var(--border))"
-          strokeWidth={stroke}
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke="currentColor"
-          className={TONE_TEXT[tone]}
-          strokeWidth={stroke}
-          strokeLinecap="butt"
-          strokeDasharray={`${filled} ${circumference - filled}`}
-          style={
-            animate
-              ? ({
-                  ["--dash-total" as string]: `${circumference}`,
-                  animation: "sweep 1.1s var(--ease) both",
-                } as React.CSSProperties)
-              : undefined
-          }
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span
-          className={cn(
-            "font-mono tnum font-semibold leading-none text-ink",
-            size < 80 ? "text-sm" : "text-4xl",
-          )}
-        >
+      <div className="flex items-end gap-5">
+        <span className={cn("display text-d6 tnum leading-none", TONE_TEXT[tone])}>
           {score}
         </span>
-        {size >= 80 && (
-          <span className="mt-1.5 text-2xs font-semibold uppercase tracking-[0.14em] text-ink-subtle">
-            Grade {grade}
-          </span>
-        )}
+        <div className="mb-3 flex flex-col gap-1.5">
+          <span className="label">Grade</span>
+          <span className="display text-d2 leading-none text-ink">{grade}</span>
+        </div>
       </div>
+
+      {/* Calibrated rail */}
+      <div className="relative mt-7 h-8 w-full">
+        <div className="absolute inset-x-0 bottom-0 h-px bg-rule-strong" />
+
+        <div
+          className={cn("absolute bottom-0 left-0 h-[3px] origin-left", TONE_BG[tone])}
+          style={{
+            width: `${clamped}%`,
+            animation: animate ? "gauge-fill 900ms var(--ease-out) both" : undefined,
+          }}
+        />
+
+        {Array.from({ length: 21 }, (_, i) => i * 5).map((t) => {
+          const major = MAJOR.includes(t);
+          return (
+            <div
+              key={t}
+              className={cn(
+                "absolute bottom-0 w-px",
+                major ? "h-3 bg-rule-strong" : "h-1.5 bg-rule",
+              )}
+              style={{ left: `${t}%` }}
+              aria-hidden="true"
+            />
+          );
+        })}
+
+        {/* The reading */}
+        <div
+          className={cn("absolute bottom-0 h-8 w-px", TONE_BG[tone])}
+          style={{
+            left: `${clamped}%`,
+            animation: animate ? "gauge-mark 900ms var(--ease-out) both" : undefined,
+          }}
+          aria-hidden="true"
+        />
+      </div>
+
+      <div className="mt-2 flex justify-between">
+        {MAJOR.map((t) => (
+          <span key={t} className="font-mono text-2xs tnum text-ink-subtle">
+            {t}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Compact reading for list rows. Typeset figure over a short tone rule. */
+export function ScoreMark({ score, grade }: { score: number; grade: string }) {
+  const tone = scoreTone(score);
+  return (
+    <div className="flex w-12 shrink-0 flex-col items-start">
+      <span className={cn("display text-d2 tnum leading-none", TONE_TEXT[tone])}>
+        {score}
+      </span>
+      <span className="mt-2 block h-[2px] w-full bg-sunken">
+        <span
+          className={cn("block h-full", TONE_BG[tone])}
+          style={{ width: `${Math.max(2, score)}%` }}
+        />
+      </span>
+      <span className="mt-1 font-mono text-2xs text-ink-subtle">{grade}</span>
     </div>
   );
 }
@@ -87,6 +120,7 @@ export function CategoryBar({
   issueCount,
   onClick,
   active,
+  index,
 }: {
   label: string;
   score: number;
@@ -94,6 +128,7 @@ export function CategoryBar({
   issueCount: number;
   onClick?: () => void;
   active?: boolean;
+  index?: number;
 }) {
   const tone = scoreTone(score);
   const Tag = onClick ? "button" : "div";
@@ -102,32 +137,36 @@ export function CategoryBar({
     <Tag
       onClick={onClick}
       className={cn(
-        "block w-full px-4 py-2.5 text-left transition-colors duration-fast ease-ease",
+        "block w-full px-5 py-3 text-left transition-colors duration-fast ease-ease",
         onClick && "hover:bg-surface-hover",
         active && "bg-surface-active",
       )}
     >
       <div className="flex items-baseline justify-between gap-3">
-        <span className="text-sm font-medium text-ink">{label}</span>
-        <span className="flex items-baseline gap-2">
-          {issueCount > 0 && (
+        <span className="flex min-w-0 items-baseline gap-2">
+          {index !== undefined && (
             <span className="font-mono text-2xs tnum text-ink-subtle">
-              {issueCount} issue{issueCount === 1 ? "" : "s"}
+              {String(index + 1).padStart(2, "0")}
             </span>
           )}
-          <span className={cn("font-mono text-sm tnum font-semibold", TONE_TEXT[tone])}>
-            {score}
-          </span>
+          <span className="truncate text-sm text-ink">{label}</span>
+        </span>
+        <span className={cn("shrink-0 font-mono text-sm tnum font-medium", TONE_TEXT[tone])}>
+          {score}
         </span>
       </div>
-      <div className="mt-1.5 flex items-center gap-2">
-        <div className="h-1 flex-1 overflow-hidden rounded-full bg-sunken">
+
+      <div className="mt-2 flex items-center gap-3">
+        <div className="relative h-[3px] flex-1 bg-sunken">
           <div
-            className={cn("h-full rounded-full transition-[width] duration-slow ease-ease", TONE_BG[tone])}
+            className={cn("absolute inset-y-0 left-0", TONE_BG[tone])}
             style={{ width: `${Math.max(1, score)}%` }}
           />
         </div>
-        <span className="w-9 shrink-0 text-right font-mono text-2xs tnum text-ink-subtle">
+        <span className="w-14 shrink-0 text-right font-mono text-2xs tnum text-ink-subtle">
+          {issueCount > 0 ? `${issueCount} open` : "clear"}
+        </span>
+        <span className="w-7 shrink-0 text-right font-mono text-2xs tnum text-ink-subtle">
           {weight}%
         </span>
       </div>
@@ -136,13 +175,13 @@ export function CategoryBar({
 }
 
 /**
- * Score history. Straight segments between real points - no interpolation,
- * because a curve through five audits invents four values that never existed.
+ * Score history. Straight segments between real points, because a curve
+ * through six audits invents five values that were never measured.
  */
 export function Sparkline({
   points,
-  width = 220,
-  height = 44,
+  width = 240,
+  height = 48,
 }: {
   points: number[];
   width?: number;
@@ -150,17 +189,14 @@ export function Sparkline({
 }) {
   if (points.length < 2) {
     return (
-      <div
-        style={{ width, height }}
-        className="flex items-center justify-center text-2xs text-ink-subtle"
-      >
+      <div style={{ height }} className="flex items-center text-2xs text-ink-subtle">
         Not enough audits yet
       </div>
     );
   }
 
-  const pad = 4;
-  const min = Math.min(...points, 40);
+  const pad = 5;
+  const min = Math.min(...points, 50);
   const max = Math.max(...points, 100);
   const span = Math.max(1, max - min);
 
@@ -170,29 +206,45 @@ export function Sparkline({
     return [x, y] as const;
   });
 
-  const path = coords.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
+  const path = coords
+    .map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`)
+    .join(" ");
   const last = coords[coords.length - 1];
   const tone = scoreTone(points[points.length - 1]);
 
   return (
-    <svg width={width} height={height} className="overflow-visible">
+    <svg
+      width="100%"
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="none"
+      className="overflow-visible"
+    >
       <path
         d={path}
         fill="none"
-        stroke="hsl(var(--border-strong))"
-        strokeWidth="1.5"
+        stroke="hsl(var(--text-subtle))"
+        strokeWidth="1.25"
         strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
         shapeRendering="geometricPrecision"
       />
       {coords.map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r="1.75" fill="hsl(var(--border-strong))" />
+        <rect key={i} x={x - 1.25} y={y - 1.25} width="2.5" height="2.5" fill="hsl(var(--text-subtle))" />
       ))}
-      <circle cx={last[0]} cy={last[1]} r="3" className={TONE_TEXT[tone]} fill="currentColor" />
+      <rect
+        x={last[0] - 2.5}
+        y={last[1] - 2.5}
+        width="5"
+        height="5"
+        className={TONE_TEXT[tone]}
+        fill="currentColor"
+      />
     </svg>
   );
 }
 
-/** A count of audits per ten-point band. Flat bars, honest buckets. */
+/** Counts per band. Flat bars, stated buckets, no legend to decode. */
 export function ScoreHistogram({ scores }: { scores: number[] }) {
   const buckets = [
     { label: "0-59", tone: "critical" as const, test: (s: number) => s < 60 },
@@ -203,13 +255,22 @@ export function ScoreHistogram({ scores }: { scores: number[] }) {
   const max = Math.max(1, ...counts);
 
   return (
-    <div className="flex items-end gap-3 px-4 py-3" style={{ height: 88 }}>
+    <div className="flex items-end gap-4 px-5 py-4" style={{ height: 96 }}>
       {buckets.map((bucket, i) => (
-        <div key={bucket.label} className="flex flex-1 flex-col items-center gap-1.5">
+        <div key={bucket.label} className="flex flex-1 flex-col justify-end gap-2">
           <span className="font-mono text-xs tnum text-ink">{counts[i]}</span>
+          {/* An empty bucket still gets a rule, so the axis stays readable
+              rather than the bar simply vanishing. */}
           <div
-            className={cn("w-full rounded-xs", TONE_BG[bucket.tone])}
-            style={{ height: `${Math.max(2, (counts[i] / max) * 40)}px` }}
+            className={cn(
+              "w-full",
+              counts[i] === 0 ? "border-t border-dashed" : "",
+              counts[i] === 0 ? TONE_BORDER[bucket.tone] : TONE_BG[bucket.tone],
+            )}
+            style={{
+              height: counts[i] === 0 ? 0 : `${Math.max(4, (counts[i] / max) * 34)}px`,
+              opacity: counts[i] === 0 ? 0.5 : 1,
+            }}
           />
           <span className="font-mono text-2xs tnum text-ink-subtle">{bucket.label}</span>
         </div>
