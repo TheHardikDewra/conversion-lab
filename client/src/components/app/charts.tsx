@@ -35,11 +35,16 @@ export function ScoreGauge({
       role="img"
       aria-label={`Score ${score} out of 100, grade ${grade}`}
     >
-      <div className="flex items-end gap-5">
-        <span className={cn("display text-d6 tnum leading-none", TONE_TEXT[tone])}>
+      {/* The figure steps down on small screens. 136px of Instrument Serif is
+          the right weight next to a 60px title and far too much next to a
+          390px viewport. */}
+      <div className="flex items-end gap-4 sm:gap-5">
+        <span
+          className={cn("display text-d5 tnum leading-none sm:text-d6", TONE_TEXT[tone])}
+        >
           {score}
         </span>
-        <div className="mb-3 flex flex-col gap-1.5">
+        <div className="mb-2 flex flex-col gap-1.5 sm:mb-3">
           <span className="label">Grade</span>
           <span className="display text-d2 leading-none text-ink">{grade}</span>
         </div>

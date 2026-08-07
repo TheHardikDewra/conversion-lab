@@ -67,7 +67,7 @@ export default function Dashboard() {
     <>
       <PageHeader
         label="Conversion Lab"
-        size="d4"
+        size="d3"
         title={
           <>
             Landing page teardowns

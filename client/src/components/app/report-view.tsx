@@ -63,11 +63,11 @@ export function ReportView({
           </div>
         </div>
 
-        <h1 className="display mt-5 max-w-measure text-d4 text-ink">
+        <h1 className="display mt-5 max-w-measure break-words text-d3 text-ink sm:text-d4">
           {audit.pageTitle ?? hostOf(audit.finalUrl)}
         </h1>
 
-        <div className="mt-12 grid gap-10 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-end lg:gap-16">
+        <div className="mt-12 grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-end lg:gap-16">
           <ScoreGauge score={result.score} grade={result.grade} />
 
           {/* A ruled tally rather than floating chips. It gives the right-hand

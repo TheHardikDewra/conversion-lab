@@ -38,12 +38,14 @@ function useTheme() {
 export function Wordmark({ compact }: { compact?: boolean }) {
   return (
     <span className="inline-flex items-baseline gap-2 leading-none">
-      <span className="display text-d1 leading-none text-ink">
+      {/* Steps down on small screens. At 24px the lockup plus three nav items
+          plus the theme toggle does not fit a 375px viewport. */}
+      <span className="display text-lg leading-none text-ink sm:text-d1">
         Conversion
         <span className="italic text-accent"> Lab</span>
       </span>
       {!compact && (
-        <span className="mb-[3px] hidden h-2 w-8 border-b border-t border-rule-strong sm:block" />
+        <span className="mb-[3px] hidden h-2 w-8 border-b border-t border-rule-strong lg:block" />
       )}
     </span>
   );
@@ -57,12 +59,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-bg">
       <header className="sticky top-0 z-30 rule-b bg-bg/90 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-shell items-center justify-between gap-6 px-5 lg:px-10">
-          <Link href="/" className="shrink-0">
+        <div className="mx-auto flex h-16 max-w-shell items-center justify-between gap-3 px-5 sm:gap-6 lg:px-10">
+          <Link href="/" className="min-w-0 shrink">
             <Wordmark />
           </Link>
 
-          <nav className="flex items-center gap-1 sm:gap-2">
+          <nav className="flex shrink-0 items-center gap-0.5 sm:gap-2">
             {NAV.map(({ href, label }) => {
               const active =
                 href === "/" ? location === "/" : location.startsWith(href);
@@ -71,7 +73,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   key={href}
                   href={href}
                   className={cn(
-                    "relative px-2.5 py-1.5 text-2xs uppercase tracking-[0.12em]",
+                    "relative px-1.5 py-1.5 text-2xs uppercase tracking-[0.08em]",
+                    "sm:px-2.5 sm:tracking-[0.12em]",
                     "transition-colors duration-fast ease-ease",
                     active
                       ? "font-semibold text-ink"
@@ -80,7 +83,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 >
                   {label}
                   {active && (
-                    <span className="absolute inset-x-2.5 -bottom-px h-px bg-accent" />
+                    <span className="absolute inset-x-1.5 -bottom-px h-px bg-accent sm:inset-x-2.5" />
                   )}
                 </Link>
               );
@@ -144,7 +147,7 @@ export function PageHeader({
     <header className="mb-10 rule-b pb-6">
       {label && <div className="label mb-3">{label}</div>}
       <div className="flex flex-wrap items-end justify-between gap-5">
-        <h1 className={cn("display max-w-measure text-ink", DISPLAY_SIZE[size])}>
+        <h1 className={cn("display max-w-measure break-words text-ink", DISPLAY_SIZE[size])}>
           {title}
         </h1>
         {action && <div className="shrink-0 pb-1">{action}</div>}
