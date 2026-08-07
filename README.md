@@ -6,9 +6,11 @@ A CRO audit tool that fetches any public landing page, reads its copy and struct
 
 Runs with **zero configuration**. No API key, no database, no signup. Clone it, `npm run dev`, and you land in a populated app.
 
-![Conversion Lab: pasting a URL, running a live audit, expanding a finding, and switching to dark mode](docs/demo.gif)
+**Live demo: [theconversionlab.vercel.app](https://theconversionlab.vercel.app)**
 
-*Recorded against the running app. The audit in the clip is live, not a mockup.*
+![Conversion Lab: pasting a URL, running a live audit, expanding a finding, and switching between themes](docs/demo.gif)
+
+*Recorded against the running app. The audit in the clip is a real fetch and a real score, not a mockup.*
 
 ---
 
@@ -17,7 +19,7 @@ Runs with **zero configuration**. No API key, no database, no signup. Clone it, 
 | Screen | What it does |
 |---|---|
 | `/` | Dashboard: run an audit, score history, distribution, all past audits |
-| `/audit/:id` | Full report: score ring, six category breakdowns, ranked findings, page vitals |
+| `/audit/:id` | Full report: calibrated score gauge, six category breakdowns, numbered findings, page vitals |
 | `/audit/:id` → Rewrites | Three copy variants per slot, each with its angle and rationale |
 | `/audit/:id` → What we read | Every fact the score was built from, so the grade is auditable |
 | `/r/:token` | Public share link. Clean document view, no app chrome, no auth |
@@ -133,7 +135,9 @@ client/
     components/app/        Charts, shell, report view, issue list
     pages/                 One file per screen
 server/
-  index.ts                 Express, single process, serves API + client
+  app.ts                   The Express app, transport-agnostic
+  index.ts                 Long-lived listener for Replit and local dev
+  vercel-entry.ts          Same app, handed to a serverless runtime
   routes.ts                REST endpoints
   storage.ts               Memory and Postgres behind one interface
   seed.ts                  GENERATED. Real analyzer output, not hand-written.
@@ -145,9 +149,10 @@ server/
     index.ts               Orchestration and scoring
 shared/schema.ts           Types + Drizzle tables. One source of truth.
 scripts/build-seed.ts      Regenerates sample data from live pages
+scripts/verify-layout.mjs  Headless overflow check across widths and themes
 ```
 
-React + Vite + Express + TypeScript. Tailwind mapped entirely onto CSS variables. Wouter for routing, TanStack Query for data, Drizzle for Postgres, Cheerio for parsing. Charts are hand-written SVG, no charting library.
+React + Vite + Express + TypeScript. Tailwind mapped entirely onto CSS variables. Wouter for routing, TanStack Query for data, Drizzle for Postgres, Cheerio for parsing. Instrument Serif for display, Geist for interface, Geist Mono for every number. Marks are hand-drawn, no charting library.
 
 ### About the sample data
 
@@ -188,3 +193,18 @@ start gets a fresh in-memory store re-seeded from `server/seed.ts`. The sample
 reports are always there, but an audit you run yourself lives only as long as
 that instance. Set `DATABASE_URL` to persist. On Replit the process is
 long-lived, so this does not apply.
+
+---
+
+## Verifying the layout yourself
+
+```bash
+npm run dev            # in one shell
+npm run verify:layout  # in another
+```
+
+`scripts/verify-layout.mjs` drives your installed Chrome headlessly and checks
+every route at five viewport widths in both themes for horizontal overflow,
+naming the offending element when it finds one. It is how the responsive type
+scale and the flex/grid constraints in this template were checked, and it will
+catch it if you break them.
