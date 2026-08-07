@@ -199,12 +199,16 @@ long-lived, so this does not apply.
 ## Verifying the layout yourself
 
 ```bash
-npm run dev            # in one shell
-npm run verify:layout  # in another
+npm install -D puppeteer-core   # once, ~13MB, not bundled by default
+npm run dev                     # in one shell
+npm run verify:layout           # in another
 ```
 
-`scripts/verify-layout.mjs` drives your installed Chrome headlessly and checks
-every route at five viewport widths in both themes for horizontal overflow,
-naming the offending element when it finds one. It is how the responsive type
-scale and the flex/grid constraints in this template were checked, and it will
-catch it if you break them.
+`scripts/verify-layout.mjs` drives a Chrome you already have installed (nothing
+is downloaded) and checks every route at five viewport widths in both themes
+for horizontal overflow, naming the offending element when it finds one. It is
+how the responsive type scale and the flex and grid constraints in this
+template were checked, and it will catch it if you break them.
+
+It is kept out of the dependency list on purpose: most remixes never run it,
+and the template installs faster without it.

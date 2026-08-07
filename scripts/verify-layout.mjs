@@ -1,14 +1,65 @@
 /**
- * Deterministic layout verification. Drives the installed Chrome headlessly so
- * the result does not depend on an extension staying connected.
+ * Headless layout check.
  *
- * For every route, at every width, in both themes: does the document scroll
- * horizontally, and if so which element is responsible?
+ * Drives a Chrome you already have installed (via puppeteer-core, so nothing
+ * is downloaded) and asserts that no route scrolls horizontally at any of the
+ * viewport widths this template claims to support, in either theme. When it
+ * finds overflow it names the element responsible, because "something is too
+ * wide" is not a useful failure.
+ *
+ * Start the app first, then:  npm run verify:layout
+ * Point it elsewhere with:    BASE=https://your-app npm run verify:layout
+ * Override the browser with:  CHROME=/path/to/chrome npm run verify:layout
  */
-import puppeteer from "puppeteer-core";
+import { existsSync } from "node:fs";
 
-const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-const BASE = process.env.BASE ?? "http://localhost:5051";
+const BASE = process.env.BASE ?? "http://localhost:5000";
+
+/** Chrome lives in a different place on every platform, so look rather than assume. */
+const CANDIDATES = [
+  process.env.CHROME,
+  process.env.PUPPETEER_EXECUTABLE_PATH,
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "/Applications/Chromium.app/Contents/MacOS/Chromium",
+  "/usr/bin/google-chrome",
+  "/usr/bin/google-chrome-stable",
+  "/usr/bin/chromium",
+  "/usr/bin/chromium-browser",
+  "/snap/bin/chromium",
+  "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+].filter(Boolean);
+
+const executablePath = CANDIDATES.find((p) => {
+  try {
+    return existsSync(p);
+  } catch {
+    return false;
+  }
+});
+
+if (!executablePath) {
+  console.error(
+    "\nNo Chrome found. This check drives a browser you already have rather than\n" +
+      "downloading one. Install Chrome or Chromium, or point at it directly:\n\n" +
+      "  CHROME=/path/to/chrome npm run verify:layout\n",
+  );
+  process.exit(1);
+}
+
+// Deliberately not a dependency of this template. It is ~13MB and only this
+// optional check needs it, so a remixer who just wants the app does not carry
+// it. One command away if you do want to run the check.
+let puppeteer;
+try {
+  puppeteer = (await import("puppeteer-core")).default;
+} catch {
+  console.error(
+    "\nThis check needs puppeteer-core, which is deliberately not bundled with\n" +
+      "the template so the install stays small. Add it when you want it:\n\n" +
+      "  npm install -D puppeteer-core\n",
+  );
+  process.exit(1);
+}
 
 const ROUTES = [
   "/",
@@ -21,8 +72,8 @@ const ROUTES = [
 ];
 
 const WIDTHS = [
-  { name: "iphone-se", width: 375, height: 812 },
-  { name: "iphone-pro", width: 430, height: 932 },
+  { name: "phone-sm", width: 375, height: 812 },
+  { name: "phone-lg", width: 430, height: 932 },
   { name: "tablet", width: 768, height: 1024 },
   { name: "laptop", width: 1280, height: 900 },
   { name: "desktop", width: 1600, height: 1000 },
@@ -30,8 +81,17 @@ const WIDTHS = [
 
 const THEMES = ["light", "dark"];
 
+// Fail fast with a useful message rather than a connection stack trace.
+try {
+  const res = await fetch(`${BASE}/healthz`, { signal: AbortSignal.timeout(4000) });
+  if (!res.ok) throw new Error(String(res.status));
+} catch {
+  console.error(`\nNothing responding at ${BASE}. Start the app first:\n\n  npm run dev\n`);
+  process.exit(1);
+}
+
 const browser = await puppeteer.launch({
-  executablePath: CHROME,
+  executablePath,
   headless: "shell",
   args: ["--no-sandbox", "--disable-dev-shm-usage"],
 });
@@ -49,9 +109,8 @@ for (const theme of THEMES) {
         localStorage.setItem("cl-theme", t);
         document.documentElement.classList.toggle("dark", t === "dark");
       }, theme);
-      // Let fonts settle and the entrance animations finish.
       await page.evaluate(() => document.fonts.ready);
-      await new Promise((r) => setTimeout(r, 350));
+      await new Promise((r) => setTimeout(r, 300));
 
       const result = await page.evaluate(() => {
         const d = document.documentElement;
@@ -63,9 +122,7 @@ for (const theme of THEMES) {
             const r = el.getBoundingClientRect();
             if (r.right > vw + 1 && r.width > 0) {
               offenders.push(
-                el.tagName.toLowerCase() +
-                  (el.className ? "." + String(el.className).slice(0, 45) : "") +
-                  ` w=${Math.round(r.width)} right=${Math.round(r.right)}`,
+                `${el.tagName.toLowerCase()}${el.className ? "." + String(el.className).slice(0, 45) : ""} w=${Math.round(r.width)}`,
               );
             }
           });
@@ -74,47 +131,26 @@ for (const theme of THEMES) {
       });
 
       checks++;
-      if (result.sw > result.vw + 1) {
-        failures.push({ theme, vp: vp.name, route, ...result });
-      }
+      if (result.sw > result.vw + 1) failures.push({ theme, vp: vp.name, route, ...result });
     }
   }
 }
 
-// Spot-check that the responsive display type actually swaps at the breakpoint.
-const typeCheck = [];
-for (const vp of [{ w: 375 }, { w: 1280 }]) {
-  await page.setViewport({ width: vp.w, height: 900 });
-  await page.goto(BASE + "/audit/sample-stripe", { waitUntil: "networkidle2" });
-  await page.evaluate(() => document.fonts.ready);
-  const sizes = await page.evaluate(() => {
-    const score = document.querySelector('[role="img"] span');
-    const h1 = document.querySelector("h1");
-    const mark = document.querySelector("header span.display");
-    return {
-      score: score ? getComputedStyle(score).fontSize : null,
-      title: h1 ? getComputedStyle(h1).fontSize : null,
-      wordmark: mark ? getComputedStyle(mark).fontSize : null,
-    };
-  });
-  typeCheck.push({ viewport: vp.w, ...sizes });
-}
-
 await browser.close();
 
-console.log(`\nran ${checks} layout checks (${ROUTES.length} routes x ${WIDTHS.length} widths x ${THEMES.length} themes)\n`);
-console.log("responsive display type:");
-for (const t of typeCheck) {
-  console.log(`  ${String(t.viewport).padStart(4)}px  score ${t.score}  title ${t.title}  wordmark ${t.wordmark}`);
-}
-console.log("");
+console.log(
+  `\n${checks} checks: ${ROUTES.length} routes x ${WIDTHS.length} widths x ${THEMES.length} themes\n`,
+);
+
 if (!failures.length) {
-  console.log("no horizontal overflow on any route, at any width, in either theme");
+  console.log("no horizontal overflow anywhere\n");
   process.exit(0);
 }
-console.log(`${failures.length} OVERFLOW FAILURES:`);
+
+console.log(`${failures.length} OVERFLOW FAILURES:\n`);
 for (const f of failures) {
-  console.log(`  [${f.theme}/${f.vp}] ${f.route}  vw=${f.vw} sw=${f.sw}`);
+  console.log(`  [${f.theme} / ${f.vp}] ${f.route}   viewport ${f.vw}, content ${f.sw}`);
   f.offenders.forEach((o) => console.log(`      ${o}`));
 }
+console.log("");
 process.exit(1);
