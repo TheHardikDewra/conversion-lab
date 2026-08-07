@@ -84,10 +84,10 @@ Open `/rubric`, drag the sliders, save. Every stored audit re-scores from its ex
 
 Starting points worth trying:
 
-- **Ecommerce** — raise Proof, add a shipping-and-returns check
-- **B2B SaaS** — raise Clarity, add a pricing-transparency rule
-- **Lead gen** — raise Friction, penalise every form field past the third
-- **Publishers** — drop Offer to zero, weight Craft higher
+- **Ecommerce** - raise Proof, add a shipping-and-returns check
+- **B2B SaaS** - raise Clarity, add a pricing-transparency rule
+- **Lead gen** - raise Friction, penalise every form field past the third
+- **Publishers** - drop Offer to zero, weight Craft higher
 
 ### 2. Change the checks (`server/analyzer/rules.ts`)
 
