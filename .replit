@@ -11,7 +11,10 @@ PORT = "5000"
 
 [deployment]
 deploymentTarget = "autoscale"
-build = ["npm", "run", "build"]
+# Deployment environments prune devDependencies, and the build tools (vite,
+# esbuild, tailwind) live there. Install them explicitly or the build dies
+# with "vite: not found".
+build = ["bash", "-c", "npm ci --include=dev && npm run build"]
 run = ["npm", "run", "start"]
 
 [[ports]]
